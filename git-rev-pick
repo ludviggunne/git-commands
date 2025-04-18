@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+rev=$(git log --oneline "$@" | fzf | cut -f1 -d' ')
+
+if [ -z $rev ]; then
+  exit 1
+fi
+
+git branch -f PICK "$rev"
