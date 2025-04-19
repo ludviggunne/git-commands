@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-rev=$(git log --oneline "$@" | fzf | cut -f1 -d' ')
+rev=$(git log --color --oneline "$@" | fzf --ansi | cut -f1 -d' ')
 
 if [ -z $rev ]; then
   exit 1
