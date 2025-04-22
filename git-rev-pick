@@ -6,4 +6,4 @@ if [ -z $rev ]; then
   exit 1
 fi
 
-git branch -f PICK "$rev"
+git tag -f PICK "$rev"
