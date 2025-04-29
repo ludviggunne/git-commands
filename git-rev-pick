@@ -6,4 +6,4 @@ if [ -z $rev ]; then
   exit 1
 fi
 
-git tag -f PICK "$rev"
+git update-ref refs/PICK "$rev"
