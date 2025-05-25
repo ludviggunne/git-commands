@@ -16,3 +16,7 @@ Opens `fzf` to let you pick a revision interactively, and points a (new) ref `PI
 $ git rev-pick HEAD~3..
 $ git checkout PICK
 ```
+
+### git note
+Opens a note file specific to the current branch in the default editor.
+The note file is located at `$GIT_DIR/info/notes/<branch name>`.

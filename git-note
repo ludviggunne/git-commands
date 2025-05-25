@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+EDITOR=${EDITOR:-vi}
+GIT_DIR=`git rev-parse --path-format=absolute --git-dir`
+NOTES_DIR=$GIT_DIR/info/notes
+
+NAME=`git rev-parse --abbrev-ref HEAD`
+
+if [ "$NAME" == "HEAD" ]; then
+  >&2 echo "In detached HEAD mode, won't open note"
+  exit 1
+fi
+
+mkdir -p $NOTES_DIR
+$EDITOR $NOTES_DIR/$NAME
