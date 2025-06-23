@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 #include <termios.h>
 #include <linux/limits.h>
@@ -30,17 +31,13 @@ int file_callback(const git_diff_delta *delta, float progress, void *payload);
 int line_callback(const git_diff_delta *delta, const git_diff_hunk *hunk,
                   const git_diff_line *line, void *payload);
 void prompt_edit(void);
+void setup_term(void);
+void restore_term(void);
 
 int main(int argc, char **argv)
 {
   git_libgit2_init();
-
-  struct termios new_termios;
-  tcgetattr(STDIN_FILENO, &old_termios);
-  memcpy(&new_termios, &old_termios, sizeof(struct termios));
-  cfmakeraw(&new_termios);
-  new_termios.c_oflag |= OPOST;
-  tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+  setup_term();
 
   atexit(cleanup);
 
@@ -116,8 +113,20 @@ void prompt_edit(void)
   char cmd_buf[PATH_MAX + 512];
   snprintf(cmd_buf, sizeof(cmd_buf), "%s %s +%d", editor,
            current_file, current_line);
-  cleanup();
-  _Exit(system(cmd_buf));
+
+  restore_term();
+  errno = 0;
+  int ret = system(cmd_buf);
+  setup_term();
+
+  if (ret != 0) {
+    if (errno != 0) {
+      fprintf(stderr, "Error: failed to run '%s': %s\n", cmd_buf, strerror(errno));
+    } else {
+      fprintf(stderr, "Error: failed to run '%s': exit status %d\n", cmd_buf, ret);
+    }
+    exit(EXIT_FAILURE);
+  }
 }
 
 int hunk_callback(const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload)
@@ -171,6 +180,21 @@ int line_callback(const git_diff_delta *delta, const git_diff_hunk *hunk,
   return 0;
 }
 
+void setup_term(void)
+{
+  struct termios new_termios;
+  tcgetattr(STDIN_FILENO, &old_termios);
+  memcpy(&new_termios, &old_termios, sizeof(struct termios));
+  cfmakeraw(&new_termios);
+  new_termios.c_oflag |= OPOST;
+  tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+}
+
+void restore_term(void)
+{
+  tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
+}
+
 void cleanup(void)
 {
   if (repo != NULL)
@@ -188,7 +212,6 @@ void cleanup(void)
   if (diff != NULL)
     git_diff_free(diff);
 
-  tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
-
+  restore_term();
   git_libgit2_shutdown();
 }
