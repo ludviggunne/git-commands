@@ -20,6 +20,9 @@ git_tree       *commit_tree = NULL;
 git_tree       *parent_tree = NULL;
 git_diff       *diff        = NULL;
 
+char *input = NULL;
+size_t inputsize = 0;
+
 int current_line = -1;
 char current_file[PATH_MAX];
 char next_file[PATH_MAX];
@@ -31,13 +34,10 @@ int file_callback(const git_diff_delta *delta, float progress, void *payload);
 int line_callback(const git_diff_delta *delta, const git_diff_hunk *hunk,
                   const git_diff_line *line, void *payload);
 void prompt_edit(void);
-void setup_term(void);
-void restore_term(void);
 
 int main(int argc, char **argv)
 {
   git_libgit2_init();
-  setup_term();
 
   atexit(cleanup);
 
@@ -86,10 +86,21 @@ void prompt_edit(void)
 {
   for (;;) {
     printf("\x1b[1;34mOpen editor at the current hunk [y/n/q]? \x1b[m");
-    int c = fgetc(stdin);
-    printf("\n");
 
-    switch (c) {
+    int res = getline(&input, &inputsize, stdin);
+
+    if (res == 0)
+      continue;
+
+    if (res < 0) {
+      printf("\n");
+      exit(EXIT_FAILURE);
+    }
+
+    if (strlen(input) > 2)
+      continue;
+
+    switch (input[0]) {
     case 'Y':
     case 'y':
       break;
@@ -114,10 +125,8 @@ void prompt_edit(void)
   snprintf(cmd_buf, sizeof(cmd_buf), "%s %s +%d", editor,
            current_file, current_line);
 
-  restore_term();
   errno = 0;
   int ret = system(cmd_buf);
-  setup_term();
 
   if (ret != 0) {
     if (errno != 0) {
@@ -180,21 +189,6 @@ int line_callback(const git_diff_delta *delta, const git_diff_hunk *hunk,
   return 0;
 }
 
-void setup_term(void)
-{
-  struct termios new_termios;
-  tcgetattr(STDIN_FILENO, &old_termios);
-  memcpy(&new_termios, &old_termios, sizeof(struct termios));
-  cfmakeraw(&new_termios);
-  new_termios.c_oflag |= OPOST;
-  tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
-}
-
-void restore_term(void)
-{
-  tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
-}
-
 void cleanup(void)
 {
   if (repo != NULL)
@@ -212,6 +206,7 @@ void cleanup(void)
   if (diff != NULL)
     git_diff_free(diff);
 
-  restore_term();
+  free(input);
+
   git_libgit2_shutdown();
 }
