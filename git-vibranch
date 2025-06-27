@@ -4,7 +4,7 @@ do_prompt=false
 verbose=false
 
 cleanup() {
-	if [ ! -z "$tmpfile" ]; then
+	if [ -n "$tmpfile" ]; then
 		rm "$tmpfile"
 	fi
 }
@@ -68,7 +68,7 @@ branches=($(git branch ${git_branch_args[@]} | sed 's/\*//g'))
 tmpfile=$(mktemp)
 index=1
 
-for branch in ${branches[@]}; do
+for branch in "${branches[@]}"; do
 	printf "%04d\t%s\n" "$index" "$branch" >> "$tmpfile"
 	index=$((index+1))
 done
@@ -84,16 +84,14 @@ while read -u 200 line; do
 		invalid_tmpfile
 	fi
 
-	index=$((${components[0]} - 1))
+	index=$((components[0] - 1))
 	name=${components[1]}
 	original=${branches[$index]}
 
 	deleted=("${deleted/$original}")
 
 	if [ "$original" != "$name" ]; then
-		prompt "Rename $original to $name"
-
-		if [ $? = 0 ]; then
+		if prompt "Rename $original to $name"; then
 			if [ "$verbose" = true ]; then
 				echo "Renaming $original to $name"
 			fi
@@ -104,9 +102,7 @@ while read -u 200 line; do
 done 200< "$tmpfile"
 
 for branch in ${deleted[@]}; do
-	prompt "Delete branch $branch"
-
-	if [ $? = 0 ]; then
+	if prompt "Delete branch $branch"; then
 		if [ "$verbose" = true ]; then
 			echo "Deleting branch $branch"
 		fi
