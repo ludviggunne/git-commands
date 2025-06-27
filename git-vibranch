@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+do_prompt=false
+verbose=false
+
+cleanup() {
+	if [ ! -z "$tmpfile" ]; then
+		rm "$tmpfile"
+	fi
+}
+
+trap cleanup EXIT
+
+invalid_tmpfile() {
+	>&2 echo "Error: invalid tmpfile"
+	exit 1
+}
+
+prompt() {
+	local input
+
+	if [ $do_prompt = false ]; then
+		return 0
+	fi
+
+	while true; do
+		read -p "$* [y/n]? " input
+		case "$input" in
+			[Yy]*) return 0 ;;
+			[Nn]*) return 1 ;;
+		esac
+	done
+}
+
+for arg in "$@"; do
+	case "$arg" in
+		'--merged') 	;&
+		'--no-merged') 	;&
+		'-a') 		;&
+		'--all')	;&
+		'-r')		;&
+		'--remotes')
+			git_branch_args=(${git_branch_args[@]} "$arg")
+			;;
+
+		'-p')		;&
+		'--prompt')
+			do_prompt=true
+			;;
+
+		'-v')		;&
+		'--verbose')
+			verbose=true
+			;;
+
+		*)
+			>&2 echo "Error: Invalid argument '$arg'"
+			exit 1
+			;;
+	esac
+done
+
+if [ $do_prompt = true ]; then
+	verbose=false
+fi
+
+branches=($(git branch ${git_branch_args[@]} | sed 's/\*//g'))
+tmpfile=$(mktemp)
+index=1
+
+for branch in ${branches[@]}; do
+	printf "%04d\t%s\n" "$index" "$branch" >> "$tmpfile"
+	index=$((index+1))
+done
+
+"${EDITOR:-vi}" "$tmpfile"
+
+deleted=${branches[@]}
+
+while read -u 200 line; do
+	components=($line)
+
+	if [ ${#components[@]} -ne 2 ]; then
+		invalid_tmpfile
+	fi
+
+	index=$((${components[0]} - 1))
+	name=${components[1]}
+	original=${branches[$index]}
+
+	deleted=("${deleted/$original}")
+
+	if [ "$original" != "$name" ]; then
+		prompt "Rename $original to $name"
+
+		if [ $? = 0 ]; then
+			if [ "$verbose" = true ]; then
+				echo "Renaming $original to $name"
+			fi
+
+			git branch "$original" -m "$name"
+		fi
+	fi
+done 200< "$tmpfile"
+
+for branch in ${deleted[@]}; do
+	prompt "Delete branch $branch"
+
+	if [ $? = 0 ]; then
+		if [ "$verbose" = true ]; then
+			echo "Deleting branch $branch"
+		fi
+
+		git branch -D "$branch"
+	fi
+done
