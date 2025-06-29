@@ -2,11 +2,10 @@
 
 do_prompt=false
 verbose=false
+dry_run=false
 
 cleanup() {
-	if [ -n "$tmpfile" ]; then
-		rm "$tmpfile"
-	fi
+	[ -n "$tmpfile" ] && rm "$tmpfile"
 }
 
 trap cleanup EXIT
@@ -19,9 +18,7 @@ invalid_tmpfile() {
 prompt() {
 	local input
 
-	if [ $do_prompt = false ]; then
-		return 0
-	fi
+	[ $do_prompt = false ] && return 0
 
 	while true; do
 		read -p "$* [y/n]? " input
@@ -30,6 +27,10 @@ prompt() {
 			[Nn]*) return 1 ;;
 		esac
 	done
+}
+
+verbose_msg() {
+	[ "$verbose" = true ] && echo "$@"
 }
 
 for arg in "$@"; do
@@ -53,6 +54,11 @@ for arg in "$@"; do
 			verbose=true
 			;;
 
+		'-d')		;&
+		'--dry-run')
+			dry_run=true
+			;;
+
 		*)
 			>&2 echo "Error: Invalid argument '$arg'"
 			exit 1
@@ -60,9 +66,7 @@ for arg in "$@"; do
 	esac
 done
 
-if [ $do_prompt = true ]; then
-	verbose=false
-fi
+[ $do_prompt = true ] && verbose=false
 
 branches=($(git branch ${git_branch_args[@]} | sed 's/\*//g'))
 tmpfile=$(mktemp)
@@ -80,9 +84,7 @@ deleted=${branches[@]}
 while read -u 200 line; do
 	components=($line)
 
-	if [ ${#components[@]} -ne 2 ]; then
-		invalid_tmpfile
-	fi
+	[ ${#components[@]} -ne 2 ] && invalid_tmpfile
 
 	index=$((components[0] - 1))
 	name=${components[1]}
@@ -90,23 +92,15 @@ while read -u 200 line; do
 
 	deleted=("${deleted/$original}")
 
-	if [ "$original" != "$name" ]; then
-		if prompt "Rename $original to $name"; then
-			if [ "$verbose" = true ]; then
-				echo "Renaming $original to $name"
-			fi
-
-			git branch "$original" -m "$name"
-		fi
+	if [ "$original" != "$name" ] && prompt "Rename $original to $name"; then
+		verbose_msg "Renaming $original to $name"
+		[ "$dry_run" = false ] && git branch "$original" -m "$name"
 	fi
 done 200< "$tmpfile"
 
 for branch in ${deleted[@]}; do
 	if prompt "Delete branch $branch"; then
-		if [ "$verbose" = true ]; then
-			echo "Deleting branch $branch"
-		fi
-
-		git branch -D "$branch"
+		verbose_msg "Deleting branch $branch"
+		[ "$dry_run" = false ] && git branch -D "$branch"
 	fi
 done
