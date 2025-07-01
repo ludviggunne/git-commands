@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+current_filename=
+current_lineno=
+prompted_file_start=false
+
+main() {
+	local cmd
+
+	cmd="git show --no-prefix $*"
+	mapfile -t lines < <($cmd --color=always)
+	mapfile -t lines_nc < <($cmd --color=never)
+
+	for index in $(seq 0 "${#lines[@]}"); do
+		line="${lines[index]}"
+		line_nc="${lines_nc[index]}"
+		comps=($line_nc)
+
+		if [[ "$line_nc" == diff\ * ]]; then
+			if [ -n "$current_filename" ]; then
+				prompt
+				prompted_file_start=true
+			fi
+
+			current_filename="${comps[2]}"
+		fi
+
+		if [[ "$line_nc" == @* ]]; then
+			if [ -n "$current_lineno" ] && [ "$prompted_file_start" = false ]; then
+				prompt
+				prompted_file_start=false
+			fi
+
+			range="${comps[2]/+}"
+			current_lineno="${range%%,*}"
+		fi
+
+		echo "$line"
+	done
+
+	[ -n "$current_lineno" ] && prompt
+}
+
+prompt() {
+	while read -p $'\e[34mDo you want to edit this hunk [y/n/q]?\e[0m ' reply; do
+		case "$reply" in
+			[Yy]*) break ;;
+			[Nn]*) return ;;
+			[Qq]*) exit ;;
+		esac
+	done
+
+	"${EDITOR:-vi}" "$current_filename" +"$current_lineno"
+}
+
+main $@
