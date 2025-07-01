@@ -8,6 +8,7 @@ main() {
 	local cmd
 
 	cmd="git show --no-prefix $*"
+	$cmd $* >/dev/null || exit 1
 	mapfile -t lines < <($cmd --color=always)
 	mapfile -t lines_nc < <($cmd --color=never)
 
