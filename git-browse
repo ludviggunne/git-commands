@@ -17,13 +17,15 @@ main() {
 		comps=($line_nc)
 
 		if [[ "$line_nc" == diff\ * ]]; then
-			if [ -n "$current_filename" ]; then
+			if [ -f "$current_filename" ] && [ -n "$current_filename" ]; then
 				prompt
 				prompted_file_start=true
 			fi
 
 			current_filename="${comps[2]}"
 		fi
+
+		[ ! -f "$current_filename" ] && continue
 
 		if [[ "$line_nc" == @* ]]; then
 			if [ -n "$current_lineno" ] && [ "$prompted_file_start" = false ]; then
@@ -38,7 +40,7 @@ main() {
 		echo "$line"
 	done
 
-	[ -n "$current_lineno" ] && prompt
+	[ -n "$current_lineno" ] && [ -f "$current_filename" ] && prompt
 }
 
 prompt() {
