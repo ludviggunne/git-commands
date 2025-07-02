@@ -8,7 +8,7 @@ main() {
 	local cmd
 
 	cmd="git show --no-prefix $*"
-	$cmd $* >/dev/null || exit 1
+	$cmd >/dev/null || exit 1
 	mapfile -t lines < <($cmd --color=always)
 	mapfile -t lines_nc < <($cmd --color=never)
 
@@ -29,13 +29,11 @@ main() {
 		[ ! -f "$current_filename" ] && continue
 
 		if [[ "$line_nc" == @* ]]; then
-			if [ -n "$current_lineno" ] && [ "$prompted_file_start" = false ]; then
-				prompt
-				prompted_file_start=false
-			fi
+			[ -n "$current_lineno" ] && [ "$prompted_file_start" = false ] && prompt
 
 			range="${comps[2]/+}"
 			current_lineno="${range%%,*}"
+			prompted_file_start=false
 		fi
 
 		echo "$line"
