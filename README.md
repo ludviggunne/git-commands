@@ -18,10 +18,6 @@ $ git rev-pick HEAD~3..
 $ git checkout PICK
 ```
 
-### git note
-Opens a note file specific to the current branch in the default editor.
-The note file is located at `$GIT_DIR/info/notes/<branch name>`.
-
 ### git browse
 Pages through diff hunks for a specified commit and lets you open an
 editor at the current location.

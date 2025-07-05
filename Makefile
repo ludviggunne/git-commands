@@ -5,7 +5,6 @@ all:
 
 install: \
 	install-git-rev-pick \
-	install-git-note \
 	install-git-browse \
 	install-git-vibranch \
 
