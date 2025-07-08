@@ -6,4 +6,9 @@ if [ -z $rev ]; then
   exit 1
 fi
 
+if [ ! -t 1 ]; then
+  echo "$rev"
+  exit
+fi
+
 git update-ref refs/PICK "$rev"
