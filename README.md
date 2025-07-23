@@ -2,7 +2,6 @@
 
 ## Installation
 ```console
-$ make
 $ sudo make install PREFIX=...
 ```
 
