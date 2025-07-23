@@ -1,12 +1,12 @@
 PREFIX=.
 
+sources=$(wildcard git-*)
+targets=$(sources:%=$(PREFIX)/bin/%)
+
 all:
-	@echo "Nothing to do here. Use make install PREFIX=... instead."
+	@echo Nothing to do here. Use make install PREFIX=... instead.
 
-install: \
-	install-git-rev-pick \
-	install-git-browse \
-	install-git-vibranch \
+install: $(targets)
 
-install-%: %
-	install -Dm755 $(<) $(PREFIX)/bin/$(<)
+$(PREFIX)/bin/%: %
+	install -Dm755 $(<) $(@)
