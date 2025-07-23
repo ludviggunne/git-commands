@@ -7,9 +7,4 @@ line=$(git log --color --oneline "$@" | fzf --ansi --preview 'git show --color {
 
 rev=${line%%\ *}
 
-if [ ! -t 1 ]; then
-  echo "$rev"
-  exit
-fi
-
 git update-ref refs/PICK "$rev"

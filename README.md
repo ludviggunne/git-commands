@@ -10,14 +10,12 @@ $ sudo make install PREFIX=...
 
 ### git rev-pick
 Opens `fzf` to let you pick a revision interactively, and points a (new) ref `PICK` to it.
-`git rev-pick` accepts the same arguments as `git log`. If the output is piped to another
-command, does not create a reference, and just prints the revision.
+`git rev-pick` accepts the same arguments as `git log`.
 
-#### Examples:
+#### Example:
 ```console
 $ git rev-pick HEAD~3..
 $ git checkout PICK
-$ git rev-pick | xargs git show
 ```
 
 ### git browse
