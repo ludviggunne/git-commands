@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -e
-rev=$(git log --color --oneline "$@" | fzf --ansi | cut -f1 -d' ')
 
-if [ -z $rev ]; then
-  exit 1
-fi
+line=$(git log --color --oneline "$@" | fzf --ansi --preview 'git show --color {1}')
+
+[ -z $line ] && exit 1
+
+rev=${line%%\ *}
 
 if [ ! -t 1 ]; then
   echo "$rev"
