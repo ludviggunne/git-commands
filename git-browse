@@ -5,7 +5,7 @@ current_lineno=
 prompted_file_start=false
 
 main() {
-	local cmd
+	local cmd lines lines_nc line line_nc comps
 
 	cmd="git show --no-prefix $*"
 	$cmd >/dev/null || exit 1
@@ -15,7 +15,7 @@ main() {
 	for index in $(seq 0 "${#lines[@]}"); do
 		line="${lines[index]}"
 		line_nc="${lines_nc[index]}"
-		comps=($line_nc)
+		read -ra comps <<< "$line_nc"
 
 		if [[ "$line_nc" == diff\ * ]]; then
 			if [ -f "$current_filename" ] && [ -n "$current_filename" ]; then
@@ -29,7 +29,9 @@ main() {
 		[ ! -f "$current_filename" ] && continue
 
 		if [[ "$line_nc" == @* ]]; then
-			[ -n "$current_lineno" ] && [ "$prompted_file_start" = false ] && prompt
+			[ -n "$current_lineno" ] \
+				&& [ "$prompted_file_start" = false ] \
+				&& prompt
 
 			range="${comps[2]/+}"
 			current_lineno="${range%%,*}"
