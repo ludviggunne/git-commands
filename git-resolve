@@ -9,22 +9,6 @@ while read -r file; do
 	files["$file"]=
 done < <(git diff --name-only --diff-filter=M)
 
-yellow() {
-	echo $'\x1b[33m'"$*"$'\x1b[0m'
-}
-
-blue() {
-	echo $'\x1b[34m'"$*"$'\x1b[0m'
-}
-
-bold() {
-	echo $'\x1b[1m'"$*"$'\x1b[0m'
-}
-
-faint() {
-	echo $'\x1b[2m'"$*"$'\x1b[0m'
-}
-
 prompt_file() {
 	local file
 	file="$1"
@@ -42,7 +26,7 @@ prompt_file() {
 	end=0
 	mid=0
 
-	bold "Resolving file $file"
+	echo "Resolving file $file"
 
 	local line
 	for line in "${content[@]}"; do
@@ -51,15 +35,15 @@ prompt_file() {
 		case "$line" in
 		'<<<<<<<'*)
 			start="$lineno"
-			echo "$(yellow "$line") $(faint "$their_msg")"
+			echo "$line $their_msg"
 			;;
 		'======='*)
 			mid="$lineno"
-			yellow "$line"
+			echo "$line"
 			;;
 		'>>>>>>>'*)
 			end="$lineno"
-			echo "$(yellow "$line") $(faint "$our_msg")"
+			echo "$line $our_msg"
 			prompt_conflict "$file" "$start" "$mid" "$end" </dev/tty || return
 			;;
 		*)
@@ -84,7 +68,7 @@ prompt_conflict() {
 	((end+=offset))
 
 	local reply
-	while read -r -p "$(blue "Keep (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile, (a)bort or (q)uit [t/b/e/s/f/a/q]? ")" reply; do
+	while read -r -p "Keep (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile, (a)bort or (q)uit [t/b/e/s/f/a/q]? " reply; do
 		case "$reply" in
 		[tT]*)
 			sed -i "${mid},${end}d; ${start}d" "$file"
