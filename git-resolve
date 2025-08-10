@@ -26,8 +26,6 @@ prompt_file() {
 	end=0
 	mid=0
 
-	echo "Resolving file $file"
-
 	local line
 	for line in "${content[@]}"; do
 		((lineno++)) || :
@@ -35,6 +33,8 @@ prompt_file() {
 		case "$line" in
 		'<<<<<<<'*)
 			start="$lineno"
+			echo
+			echo
 			echo "$line $their_msg"
 			;;
 		'======='*)
@@ -44,6 +44,8 @@ prompt_file() {
 		'>>>>>>>'*)
 			end="$lineno"
 			echo "$line $our_msg"
+			echo
+			echo "File: $file"
 			prompt_conflict "$file" "$start" "$mid" "$end" </dev/tty || return
 			;;
 		*)
@@ -103,5 +105,4 @@ prompt_conflict() {
 
 for file in "${!files[@]}"; do
 	prompt_file "$file"
-	echo
 done
