@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+set -e
+
+declare -A files
+
+while read -r file; do
+	files["$file"]=
+done < <(git ls-files)
+
+yellow() {
+	echo $'\x1b[33m'"$*"$'\x1b[0m'
+}
+
+blue() {
+	echo $'\x1b[34m'"$*"$'\x1b[0m'
+}
+
+prompt_file() {
+	local file
+	file="$1"
+
+	[ ! -e "$file" ] && return
+
+	local lineno start end mid
+	lineno=0
+	start=0
+	end=0
+	mid=0
+
+	blue "Resolving file $file"
+
+	local line
+	while read -r line; do
+		((lineno++)) || :
+
+		case "$line" in
+		'<<<<<<<'*)
+			start="$lineno"
+			yellow "$line"
+			;;
+		'======='*)
+			mid="$lineno"
+			yellow "$line"
+			;;
+		'>>>>>>>'*)
+			end="$lineno"
+			yellow "$line"
+			prompt_conflict "$file" "$start" "$mid" "$end" </dev/tty || return
+			;;
+		*)
+			[ "$start" -gt "$end" ] && echo "$line"
+			;;
+		esac
+	done <"$file"
+}
+
+prompt_conflict() {
+	local file start end mid
+
+	file="$1"
+	start="$2"
+	mid="$3"
+	end="$4"
+
+	local reply
+	while read -r -p "$(blue "Pick (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile or (q)uit [t/b/e/s/f/q]? ")" reply; do
+		case "$reply" in
+		[tT]*) sed -i "${mid},${end}d; ${start}d" "$file" ;;
+		[bB]*) sed -i "${start},${mid}d; ${end}d" "$file" ;;
+		[eE]*) "${EDITOR:-vi}" "$file" +"$start" ;;
+		[sS]*) return 0 ;;
+		[fF]*) return 1 ;;
+		[qQ]*) exit ;;
+		*) continue ;;
+		esac
+		break
+	done
+}
+
+for file in "${!files[@]}"; do
+	prompt_file "$file"
+done

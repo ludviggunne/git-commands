@@ -23,3 +23,6 @@ editor at the current location.
 
 ### git vibranch
 Like moreutils' vidir but for git branches. Let's you batch rename/delete branches using a text editor.
+
+### git resolve
+Resolve merge conflicts interactively.
