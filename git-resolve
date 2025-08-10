@@ -2,6 +2,9 @@
 
 declare -A files
 
+their_msg="$(git log -1 --format=%s HEAD)"
+our_msg="$(git log -1 --format=%s MERGE_HEAD)"
+
 while read -r file; do
 	files["$file"]=
 done < <(git diff --name-only --diff-filter=M)
@@ -16,6 +19,10 @@ blue() {
 
 bold() {
 	echo $'\x1b[1m'"$*"$'\x1b[0m'
+}
+
+faint() {
+	echo $'\x1b[2m'"$*"$'\x1b[0m'
 }
 
 prompt_file() {
@@ -41,7 +48,7 @@ prompt_file() {
 		case "$line" in
 		'<<<<<<<'*)
 			start="$lineno"
-			yellow "$line"
+			echo "$(yellow "$line") $(faint "$their_msg")"
 			;;
 		'======='*)
 			mid="$lineno"
@@ -49,7 +56,7 @@ prompt_file() {
 			;;
 		'>>>>>>>'*)
 			end="$lineno"
-			yellow "$line"
+			echo "$(yellow "$line") $(faint "$our_msg")"
 			prompt_conflict "$file" "$start" "$mid" "$end" </dev/tty || return
 			;;
 		*)
