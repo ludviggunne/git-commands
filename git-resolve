@@ -46,7 +46,7 @@ prompt_file() {
 			echo "$line $our_msg"
 			echo
 			echo "File: $file"
-			prompt_conflict "$file" "$start" "$mid" "$end" </dev/tty || return
+			prompt_conflict "$file" "$start" "$mid" "$end" || return
 			;;
 		*)
 			[ "$start" -gt "$end" ] && echo "$line"
