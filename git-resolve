@@ -72,7 +72,7 @@ prompt_conflict() {
 	((end+=offset))
 
 	local reply
-	while read -r -p "$(blue "Pick (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile or (q)uit [t/b/e/s/f/q]? ")" reply; do
+	while read -r -p "$(blue "Keep (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile or (q)uit [t/b/e/s/f/q]? ")" reply; do
 		case "$reply" in
 		[tT]*)
 			sed -i "${mid},${end}d; ${start}d" "$file"
