@@ -31,6 +31,9 @@ prompt_file() {
 
 	[ ! -e "$file" ] && return
 
+	local content
+	mapfile -t content <"$file"
+
 	offset=0
 
 	local lineno start end mid
@@ -63,7 +66,7 @@ prompt_file() {
 			[ "$start" -gt "$end" ] && echo "$line"
 			;;
 		esac
-	done <"$file"
+	done <"$(printf "%s\n" "${content[@]}")"
 
 	git add "$file"
 }
