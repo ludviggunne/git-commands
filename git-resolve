@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
-set -e
-
 declare -A files
 
 while read -r file; do
 	files["$file"]=
-done < <(git ls-files)
+done < <(git diff --name-only --diff-filter=M)
 
 yellow() {
 	echo $'\x1b[33m'"$*"$'\x1b[0m'
@@ -14,6 +12,10 @@ yellow() {
 
 blue() {
 	echo $'\x1b[34m'"$*"$'\x1b[0m'
+}
+
+bold() {
+	echo $'\x1b[1m'"$*"$'\x1b[0m'
 }
 
 prompt_file() {
@@ -28,7 +30,7 @@ prompt_file() {
 	end=0
 	mid=0
 
-	blue "Resolving file $file"
+	bold "Resolving file $file"
 
 	local line
 	while read -r line; do
@@ -80,4 +82,5 @@ prompt_conflict() {
 
 for file in "${!files[@]}"; do
 	prompt_file "$file"
+	echo
 done
