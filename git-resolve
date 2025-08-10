@@ -24,6 +24,8 @@ prompt_file() {
 
 	[ ! -e "$file" ] && return
 
+	offset=0
+
 	local lineno start end mid
 	lineno=0
 	start=0
@@ -65,12 +67,28 @@ prompt_conflict() {
 	mid="$3"
 	end="$4"
 
+	((start+=offset))
+	((mid+=offset))
+	((end+=offset))
+
 	local reply
 	while read -r -p "$(blue "Pick (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile or (q)uit [t/b/e/s/f/q]? ")" reply; do
 		case "$reply" in
-		[tT]*) sed -i "${mid},${end}d; ${start}d" "$file" ;;
-		[bB]*) sed -i "${start},${mid}d; ${end}d" "$file" ;;
-		[eE]*) "${EDITOR:-vi}" "$file" +"$start" ;;
+		[tT]*)
+			sed -i "${mid},${end}d; ${start}d" "$file"
+			((offset-=end-mid+2))
+			;;
+		[bB]*)
+			sed -i "${start},${mid}d; ${end}d" "$file"
+			((offset-=mid-start+2))
+			;;
+		[eE]*)
+			local before after _
+			read -r before _ < <(wc -l "$file")
+			"${EDITOR:-vi}" "$file" +"$start"
+			read -r after _ < <(wc -l "$file")
+			((offset-=before-after))
+			;;
 		[sS]*) return 0 ;;
 		[fF]*) return 1 ;;
 		[qQ]*) exit ;;
