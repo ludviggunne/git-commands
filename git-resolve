@@ -53,8 +53,6 @@ prompt_file() {
 			;;
 		esac
 	done
-
-	git add "$file"
 }
 
 prompt_conflict() {
@@ -89,11 +87,9 @@ prompt_conflict() {
 			;;
 		[sS]*) return 0 ;;
 		[fF]*)
-			git add "$file"
 			return 1
 			;;
 		[qQ]*)
-			git add "$file"
 			exit
 			;;
 		[aA]*) exit ;;
