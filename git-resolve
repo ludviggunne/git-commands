@@ -90,15 +90,18 @@ prompt_conflict() {
 			read -r after _ < <(wc -l "$file")
 			((offset-=before-after))
 			;;
-		[sS]*) return 0 ;;
+		[sS]*)
+			return 0
+			;;
 		[fF]*)
 			return 1
 			;;
 		[qQ]*)
 			exit
 			;;
-		[aA]*) exit ;;
-		*) continue ;;
+		*)
+			continue
+			;;
 		esac
 		break
 	done
