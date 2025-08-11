@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+yellow=$'\x1b[33m'
+blue=$'\x1b[34m'
+dim=$'\x1b[2m'
+reset=$'\x1b[0m'
+
 declare -A files
 
 their_msg="$(git log -1 --format=%s HEAD)"
@@ -35,17 +40,17 @@ prompt_file() {
 			start="$lineno"
 			echo
 			echo
-			echo "$line $their_msg"
+			echo "${yellow}${line}${reset} ${reset}${dim}${their_msg}${reset}"
 			;;
 		'======='*)
 			mid="$lineno"
-			echo "$line"
+			echo "${yellow}${line}${reset}${reset}"
 			;;
 		'>>>>>>>'*)
 			end="$lineno"
-			echo "$line $our_msg"
+			echo "${yellow}${line}${reset} ${reset}${dim}${our_msg}${reset}"
 			echo
-			echo "File: $file"
+			echo "${blue} File: ${file}${reset}"
 			prompt_conflict "$file" "$start" "$mid" "$end" || return
 			;;
 		*)
@@ -68,7 +73,7 @@ prompt_conflict() {
 	((end+=offset))
 
 	local reply
-	while read -r -p "Keep (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile, (a)bort or (q)uit [t/b/e/s/f/a/q]? " reply; do
+	while read -r -p "${blue}Keep (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile or (q)uit [t/b/e/s/f/q]? ${reset}" reply; do
 		case "$reply" in
 		[tT]*)
 			sed -i "${mid},${end}d; ${start}d" "$file"
