@@ -33,24 +33,24 @@ prompt_file() {
 
 	local line
 	for line in "${content[@]}"; do
-		((lineno++)) || :
+		((lineno++))
 
 		case "$line" in
 		'<<<<<<<'*)
 			start="$lineno"
 			echo
 			echo
-			echo "${yellow}${line}${reset} ${reset}${dim}${their_msg}${reset}"
+			echo "${yellow}${line}${reset} ${dim}${their_msg}${reset}"
 			;;
 		'======='*)
 			mid="$lineno"
-			echo "${yellow}${line}${reset}${reset}"
+			echo "${yellow}${line}${reset}"
 			;;
 		'>>>>>>>'*)
 			end="$lineno"
-			echo "${yellow}${line}${reset} ${reset}${dim}${our_msg}${reset}"
+			echo "${yellow}${line}${reset} ${dim}${our_msg}${reset}"
 			echo
-			echo "${blue} File: ${file}${reset}"
+			echo "${blue}File: ${file}${reset}"
 			prompt_conflict "$file" "$start" "$mid" "$end" || return
 			;;
 		*)
