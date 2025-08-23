@@ -98,6 +98,11 @@ prompt_conflict() {
 	done
 }
 
+if ! git show-ref --verify -q MERGE_HEAD; then
+	>&2 echo "Not currently merging"
+	exit 1
+fi
+
 declare -A files
 
 their_msg="$(git log -1 --format=%s HEAD)"
