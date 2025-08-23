@@ -5,15 +5,6 @@ blue=$'\x1b[34m'
 dim=$'\x1b[2m'
 reset=$'\x1b[0m'
 
-declare -A files
-
-their_msg="$(git log -1 --format=%s HEAD)"
-our_msg="$(git log -1 --format=%s MERGE_HEAD)"
-
-while read -r file; do
-	files["$file"]=
-done < <(git diff --name-only --diff-filter=M)
-
 prompt_file() {
 	local file
 	file="$1"
@@ -106,6 +97,15 @@ prompt_conflict() {
 		break
 	done
 }
+
+declare -A files
+
+their_msg="$(git log -1 --format=%s HEAD)"
+our_msg="$(git log -1 --format=%s MERGE_HEAD)"
+
+while read -r file; do
+	files["$file"]=
+done < <(git diff --name-only --diff-filter=M)
 
 for file in "${!files[@]}"; do
 	prompt_file "$file"
