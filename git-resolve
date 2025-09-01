@@ -24,7 +24,7 @@ prompt_file() {
 
 	local line
 	for line in "${content[@]}"; do
-		((lineno++))
+		let lineno++
 
 		case "$line" in
 		'<<<<<<<'*)
@@ -59,27 +59,27 @@ prompt_conflict() {
 	mid="$3"
 	end="$4"
 
-	((start+=offset))
-	((mid+=offset))
-	((end+=offset))
+	let start+=offset
+	let mid+=offset
+	let end+=offset
 
 	local reply
 	while read -r -p "${blue}Keep (t)op/(b)ottom, (e)dit, (s)kip conflict, skip (f)ile or (q)uit [t/b/e/s/f/q]? ${reset}" reply; do
 		case "$reply" in
 		[tT]*)
 			sed -i "${mid},${end}d; ${start}d" "$file"
-			((offset-=end-mid+2))
+			let offset-=end-mid+2
 			;;
 		[bB]*)
 			sed -i "${start},${mid}d; ${end}d" "$file"
-			((offset-=mid-start+2))
+			let offset-=mid-start+2
 			;;
 		[eE]*)
 			local before after _
 			read -r before _ < <(wc -l "$file")
 			"${EDITOR:-vi}" "$file" +"$start"
 			read -r after _ < <(wc -l "$file")
-			((offset-=before-after))
+			let offset-=before-after
 			;;
 		[sS]*)
 			return 0

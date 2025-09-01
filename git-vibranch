@@ -74,7 +74,7 @@ index=1
 
 for branch in "${branches[@]}"; do
 	printf "%04d\t%s\n" "$index" "$branch" >> "$tmpfile"
-	index=$((index+1))
+	let index++
 done
 
 "${EDITOR:-vi}" "$tmpfile"
@@ -82,13 +82,13 @@ done
 deleted=${branches[@]}
 
 while read -u 200 line; do
-	components=($line)
+	read -ra components <<<"$line"
 
 	[ ${#components[@]} -ne 2 ] && invalid_tmpfile
 
-	index=$((components[0] - 1))
-	name=${components[1]}
-	original=${branches[$index]}
+	let index=components[0]-1
+	let name=components[1]
+	let original=branches[index]
 
 	deleted=("${deleted/$original}")
 
