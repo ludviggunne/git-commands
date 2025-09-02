@@ -98,15 +98,26 @@ prompt_conflict() {
 	done
 }
 
-if ! git show-ref --verify -q MERGE_HEAD; then
-	>&2 echo "Not currently merging"
-	exit 1
-fi
+possible_refs=(
+	"MERGE_HEAD"
+	"REBASE_HEAD"
+	"CHERRY_PICK_HEAD"
+	"REVERT_HEAD"
+)
+
+for ref in "${possible_refs[@]}"; do
+	git show-ref --verify -q "$ref" && {
+		our_ref="$ref"
+		break
+	}
+done
+
+[ -z "$our_ref" ] && exit 1
 
 declare -A files
 
 their_msg="$(git log -1 --format=%s HEAD)"
-our_msg="$(git log -1 --format=%s MERGE_HEAD)"
+our_msg="$(git log -1 --format=%s "$our_ref")"
 
 while read -r file; do
 	files["$file"]=
