@@ -1,106 +1,63 @@
 #!/usr/bin/env bash
 
-do_prompt=false
-verbose=false
-dry_run=false
-
-cleanup() {
-	[ -n "$tmpfile" ] && rm "$tmpfile"
-}
-
-trap cleanup EXIT
-
-invalid_tmpfile() {
-	>&2 echo "Error: invalid tmpfile"
-	exit 1
-}
-
 prompt() {
-	local input
-
-	[ $do_prompt = false ] && return 0
-
-	while true; do
-		read -p "$* [y/n]? " input
-		case "$input" in
-			[Yy]*) return 0 ;;
-			[Nn]*) return 1 ;;
+	local reply
+	while read -rp "$*" reply; do
+		case "$reply" in
+		[yY]*) return ;;
+		[nN]*) return 1 ;;
+		*) ;;
 		esac
 	done
 }
 
-verbose_msg() {
-	[ "$verbose" = true ] && echo "$@"
-}
+quiet=no
+dryrun=no
+doprompt=no
 
-for arg in "$@"; do
-	case "$arg" in
-		'--merged') 	;&
-		'--no-merged') 	;&
-		'-a') 		;&
-		'--all')	;&
-		'-r')		;&
-		'--remotes')
-			git_branch_args=(${git_branch_args[@]} "$arg")
-			;;
-
-		'-p')		;&
-		'--prompt')
-			do_prompt=true
-			;;
-
-		'-v')		;&
-		'--verbose')
-			verbose=true
-			;;
-
-		'-d')		;&
-		'--dry-run')
-			dry_run=true
-			;;
-
-		*)
-			>&2 echo "Error: Invalid argument '$arg'"
-			exit 1
-			;;
+while getopts "diq" opt "$@"; do
+	case "$opt" in
+	q) quiet=yes ;;
+	d) dryrun=yes ;;
+	i) doprompt=yes ;;
+	*) ;;
 	esac
 done
 
-[ $do_prompt = true ] && verbose=false
+declare -a oldbranches
+mapfile -t lines < <(git branch --list)
+tmp="$(mktemp)"
+counter=0
 
-branches=($(git branch ${git_branch_args[@]} | sed 's/\*//g'))
-tmpfile=$(mktemp)
-index=1
-
-for branch in "${branches[@]}"; do
-	printf "%04d\t%s\n" "$index" "$branch" >> "$tmpfile"
-	let index++
+for line in "${lines[@]}"; do
+	branch="${line//* /}"
+	oldbranches+=("$branch")
+	>>"$tmp" printf "%04d %s\n" "$counter" "${branch//* /}"
+	let counter++
 done
 
-"${EDITOR:-vi}" "$tmpfile"
+"${EDITOR:-vi}" "$tmp"
 
-deleted=${branches[@]}
+declare -a newbranches
+mapfile -t lines <"$tmp"
 
-while read -u 200 line; do
-	read -ra components <<<"$line"
+for line in "${lines[@]}"; do
+	read -r index newbranch <<<"$line"
+	newbranches["$index"]="$newbranch"
+done
 
-	[ ${#components[@]} -ne 2 ] && invalid_tmpfile
+for ((i=0; i<counter; i++)); do
+	oldbranch="${oldbranches[i]}"
+	newbranch="${newbranches[i]}"
 
-	let index=components[0]-1
-	let name=components[1]
-	let original=branches[index]
-
-	deleted=("${deleted/$original}")
-
-	if [ "$original" != "$name" ] && prompt "Rename $original to $name"; then
-		verbose_msg "Renaming $original to $name"
-		[ "$dry_run" = false ] && git branch "$original" -m "$name"
-	fi
-done 200< "$tmpfile"
-
-for branch in ${deleted[@]}; do
-	if prompt "Delete branch $branch"; then
-		verbose_msg "Deleting branch $branch"
-		[ "$dry_run" = false ] && git branch -D "$branch"
+	if [ -z "$newbranch" ]; then
+		[ "$doprompt" = yes ] && prompt "Delete branch $oldbranch [y/n]? " || continue
+		[ "$dryrun" = no ] && >/dev/null git branch -D "${oldbranches[i]}"
+		[ "$quiet" = no ] && echo "Deleted branch $oldbranch"
+	elif [ ! "$newbranch" = "$oldbranch" ]; then
+		[ "$doprompt" = yes ] && prompt "Rename branch $oldbranch to $newbranch [y/n]? " || continue
+		[ "$dryrun" = no ] && >/dev/null git branch -m "$oldbranch" "$newbranch"
+		[ "$quiet" = no ] && echo "Renamed branch $oldbranch to $newbranch"
 	fi
 done
+
