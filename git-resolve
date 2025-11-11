@@ -106,7 +106,7 @@ possible_refs=(
 )
 
 for ref in "${possible_refs[@]}"; do
-	git show-ref --verify -q "$ref" && {
+	git show-ref --verify -q "$ref" 2>/dev/null && {
 		our_ref="$ref"
 		break
 	}
