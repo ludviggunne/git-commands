@@ -8,7 +8,7 @@ $ sudo make install PREFIX=...
 ## Commands
 
 ### git rev-pick
-Opens `fzf` to let you pick a revision interactively, and points a (new) ref `PICK` to it.
+Opens `fzf` to let you pick a revision interactively, and points a (new) ref `REV_PICK` to it.
 `git rev-pick` accepts the same arguments as `git log`.
 
 #### Example:

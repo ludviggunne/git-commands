@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 line=$(git log --color --oneline "$@" | fzf --ansi --preview 'git show --color {1}')
-[ -n "$line" ] && git update-ref refs/PICK "${line%%\ *}"
+[ -n "$line" ] && git update-ref refs/REV_PICK "${line%%\ *}"
