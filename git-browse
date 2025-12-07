@@ -45,15 +45,24 @@ main() {
 }
 
 prompt() {
-	while read -p $'\e[34mDo you want to edit this hunk [y/n/q]?\e[0m ' reply; do
+	local do_exec=no
+	while read -p $'\e[34mDo you want to edit this hunk [y/n/q/e]?\e[0m ' reply; do
 		case "$reply" in
 			[Yy]*) break ;;
 			[Nn]*) return ;;
 			[Qq]*) exit ;;
+			[Ee]*)
+				do_exec=yes
+				break
+				;;
 		esac
 	done
 
-	"${EDITOR:-vi}" "$current_filename" +"$current_lineno"
+	if [ "$do_exec" = yes ]; then
+		exec "${EDITOR:-vi}" "$current_filename" +"$current_lineno"
+	else
+		"${EDITOR:-vi}" "$current_filename" +"$current_lineno"
+	fi
 }
 
 main $@
